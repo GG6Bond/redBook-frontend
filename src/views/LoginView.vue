@@ -67,7 +67,7 @@ const submit = async () => {
     <div class="login-right">
       <div class="login-container">
         <h2 class="login-title">欢迎登录</h2>
-        <p class="login-subtitle">登录你的账户继续使用红书</p>
+        <p class="login-subtitle">登录你的账户继续使用小蓝书</p>
 
         <!-- 错误提示 -->
         <el-alert

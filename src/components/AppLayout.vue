@@ -2,7 +2,7 @@
   <div class="layout-container">
     <aside class="sidebar">
       <div class="logo-section">
-        <div class="logo">BB</div>
+        <div class="logo">大蓝书</div>
       </div>
 
       <nav class="nav-menu">
@@ -12,6 +12,7 @@
           @click="handleNavClick('discover')"
         >
           <el-icon><Search /></el-icon>
+          <div>发现</div>
         </div>
         <div
           class="nav-item"
@@ -19,6 +20,7 @@
           @click="handleNavClick('publish')"
         >
           <el-icon><Plus /></el-icon>
+          <div>发布</div>
         </div>
         <div
           class="nav-item"
@@ -26,6 +28,7 @@
           @click="handleNavClick('notify')"
         >
           <el-icon><Bell /></el-icon>
+          <div>通知</div>
         </div>
         <div
           class="nav-item"
@@ -33,6 +36,7 @@
           @click="handleNavClick('mine')"
         >
           <el-icon><User /></el-icon>
+          <div>我的</div>
         </div>
       </nav>
     </aside>
@@ -139,7 +143,7 @@ const handleLogout = () => {
   height: 100vh;
 }
 .sidebar {
-  width: 64px;
+  width: 320px;
   background: #fff;
   border-right: 1px solid #eef2f5;
   display: flex;
@@ -148,38 +152,49 @@ const handleLogout = () => {
   padding-top: 12px;
 }
 .logo-section {
-  margin-bottom: 8px;
+  margin-top: 36px;
+  margin-bottom: 50px;
 }
 .logo {
-  width: 44px;
+  width: 84px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 9999px;
   background: #0099cc;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  font-size: 20px;
 }
 .nav-menu {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 20px;
   padding: 8px 0;
+  font-weight: bolder;
+  font-size: 20px;
 }
 .nav-item {
-  width: 48px;
-  height: 48px;
+  width: 200px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #666;
-  border-radius: 8px;
+  color: #000000;
+  border-radius: 30;
   cursor: pointer;
+  gap: 10px;
 }
+
+.nav-item > div {
+  font-weight: 600 !important;
+}
+
 .nav-item.active {
   background: #f0fbff;
   color: #0099cc;
+  border-radius: 9999px;
 }
 .main-content {
   flex: 1;
@@ -194,8 +209,10 @@ const handleLogout = () => {
 }
 .header-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  position: relative;
+  gap: 24px;
 }
 .search-box {
   width: 320px;
@@ -203,6 +220,8 @@ const handleLogout = () => {
 .header-actions {
   display: flex;
   gap: 12px;
+  position: absolute;
+  right: 0;
 }
 .category-bar {
   background: #fff;
