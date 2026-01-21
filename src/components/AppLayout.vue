@@ -89,7 +89,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, Plus, Bell, User, SwitchButton, Close, Service } from '@element-plus/icons-vue'
+import { Search, Plus, Bell, User, SwitchButton, Close } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 defineOptions({ name: 'AppLayout' })
@@ -151,6 +151,8 @@ const handleLogout = () => {
   flex-direction: column;
   align-items: center;
   padding-top: 12px;
+  border: none; /* 去掉所有边框 */
+  border-bottom: 0; /* 只去掉下边框 */
 }
 .logo-section {
   margin-top: 36px;
@@ -201,12 +203,14 @@ const handleLogout = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #f7f7f8;
+  background: #ffffff;
+  border: none; /* 去掉所有边框 */
+  border-bottom: 0; /* 只去掉下边框 */
 }
 .header {
   background: #fff;
   padding: 12px 24px;
-  border-bottom: 1px solid #eef2f5;
+  border-bottom: 1px solid #ffffff;
 }
 .header-content {
   display: flex;
@@ -256,6 +260,8 @@ const handleLogout = () => {
 .category-bar {
   background: #fff;
   border-bottom: 1px solid #eef2f5;
+  border: none; /* 去掉所有边框 */
+  border-bottom: 0; /* 只去掉下边框 */
 }
 .category-scroll {
   display: flex;
@@ -265,6 +271,8 @@ const handleLogout = () => {
 .category-tag {
   cursor: pointer;
   color: #666;
+  font-size: 18px;
+  margin: 5px;
 }
 .category-tag.active {
   color: #0099cc;
@@ -274,5 +282,10 @@ const handleLogout = () => {
   padding: 24px;
   width: 100%;
   box-sizing: border-box;
+}
+
+div {
+  border: none; /* 去掉所有边框 */
+  border-bottom: 0; /* 只去掉下边框 */
 }
 </style>
