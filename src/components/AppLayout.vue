@@ -46,22 +46,23 @@
         <div class="header-content">
           <div class="search-box">
             <el-input
+              class="input-search"
               v-model="searchQuery"
               placeholder="搜索笔记、用户..."
+              :clear-icon="Close"
               clearable
               @keyup.enter="handleSearch"
             >
-              <template #prefix>
-                <el-icon><Search /></el-icon>
-              </template>
             </el-input>
+            <el-icon class="search-icon"><Search /></el-icon>
           </div>
+
           <div class="header-actions">
-            <el-button v-if="hasToken" type="primary" @click="handleLogout">
+            <el-button v-if="hasToken" type="primary" @click="handleLogout" class="logout-btn">
               <el-icon><SwitchButton /></el-icon>
-              登出
+              <div style="margin-left: 6px">登出</div>
             </el-button>
-            <el-button v-else type="primary" @click="handleLogin"> 登录</el-button>
+            <el-button v-else type="primary" @click="handleLogin">登录</el-button>
           </div>
         </div>
       </header>
@@ -88,7 +89,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, Plus, Bell, User, SwitchButton } from '@element-plus/icons-vue'
+import { Search, Plus, Bell, User, SwitchButton, Close, Service } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 defineOptions({ name: 'AppLayout' })
@@ -215,14 +216,43 @@ const handleLogout = () => {
   gap: 24px;
 }
 .search-box {
-  width: 320px;
-}
-.header-actions {
+  width: 400px;
+  height: 60px;
   display: flex;
-  gap: 12px;
+  align-items: center;
+  font-size: 20px !important;
+  gap: 10px;
+}
+.search-box .input-search {
+  height: 38px;
+  font-size: 16px;
+}
+
+.search-box .search-icon {
+  font-size: 22px;
+}
+
+.search-box .input-search :deep(.el-input__wrapper) {
+  border-radius: 9999px;
+}
+
+.search-box .input-search :deep(input) {
+  padding-left: 15px;
+}
+
+.header-actions {
+  width: 60px;
+  height: 40px;
+  display: flex;
+  align-items: center;
   position: absolute;
   right: 0;
 }
+
+.logout-btn {
+  height: 32px;
+}
+
 .category-bar {
   background: #fff;
   border-bottom: 1px solid #eef2f5;
