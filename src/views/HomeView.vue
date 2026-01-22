@@ -46,10 +46,7 @@ const mapRecordToNote = (r: Record<string, unknown>): Note => {
     id: (record.id as string | number) || '',
     title: (record.title as string) || (record.content as string) || '',
     // 优先使用 coverUrl，其次使用第一张 imageUrls
-    image:
-      (record.coverUrl as string) ||
-      (Array.isArray(record.imageUrls) && record.imageUrls[0]) ||
-      'https://via.placeholder.com/280x360?text=No+Image',
+    image: record.coverUrl as string,
     avatar: (record.userVO?.avatar as string) || 'https://via.placeholder.com/32',
     author: (record.userVO?.nickname as string) || (record.userVO?.account as string) || '匿名',
     likes: (record.likes ?? record.likeCount ?? 0) as number,

@@ -81,24 +81,28 @@
         </div>
       </div>
 
-      <section class="content-area"><slot /></section>
+      <section class="content-area scrollable-content"><slot /></section>
+      <NotePublishModal v-model:visible="showPublishModal" @success="handlePublishSuccess" />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search, Plus, Bell, User, SwitchButton, Close } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import NotePublishModal from './NotePublishModal.vue'
 
 defineOptions({ name: 'AppLayout' })
 
+import { ref, onMounted } from 'vue'
 const router = useRouter()
 const searchQuery = ref('')
 const activeNav = ref('discover')
+
 const activeCategory = ref('推荐')
 const hasToken = ref(false)
+const showPublishModal = ref(false)
 
 const categories = [
   '推荐',
@@ -121,6 +125,12 @@ onMounted(() => {
 
 const handleNavClick = (nav: string) => {
   activeNav.value = nav
+  if (nav === 'publish') {
+    showPublishModal.value = true
+  }
+}
+function handlePublishSuccess() {
+  // 可选：刷新列表或提示
 }
 const handleSearch = () => {
   console.log('search:', searchQuery.value)
@@ -142,6 +152,7 @@ const handleLogout = () => {
 .layout-container {
   display: flex;
   height: 100vh;
+  overflow: hidden;
 }
 .sidebar {
   width: 320px;
@@ -151,8 +162,14 @@ const handleLogout = () => {
   flex-direction: column;
   align-items: center;
   padding-top: 12px;
-  border: none; /* 去掉所有边框 */
-  border-bottom: 0; /* 只去掉下边框 */
+  border: none;
+  border-bottom: 0;
+  position: sticky;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 10;
+  flex-shrink: 0;
 }
 .logo-section {
   margin-top: 36px;
@@ -204,13 +221,19 @@ const handleLogout = () => {
   display: flex;
   flex-direction: column;
   background: #ffffff;
-  border: none; /* 去掉所有边框 */
-  border-bottom: 0; /* 只去掉下边框 */
+  border: none;
+  border-bottom: 0;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
 }
 .header {
   background: #fff;
   padding: 12px 24px;
   border-bottom: 1px solid #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 .header-content {
   display: flex;
@@ -260,8 +283,11 @@ const handleLogout = () => {
 .category-bar {
   background: #fff;
   border-bottom: 1px solid #eef2f5;
-  border: none; /* 去掉所有边框 */
-  border-bottom: 0; /* 只去掉下边框 */
+  border: none;
+  border-bottom: 0;
+  position: sticky;
+  top: 64px; /* header高度，若header高度有变需同步调整 */
+  z-index: 15;
 }
 .category-scroll {
   display: flex;
@@ -278,10 +304,13 @@ const handleLogout = () => {
   color: #0099cc;
   border-bottom: 2px solid #0099cc;
 }
-.content-area {
+.content-area.scrollable-content {
+  flex: 1;
+  overflow-y: auto;
   padding: 24px;
   width: 100%;
   box-sizing: border-box;
+  min-height: 0;
 }
 
 div {

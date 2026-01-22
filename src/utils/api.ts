@@ -47,10 +47,15 @@ export class NoteAPI {
   }
 
   /**
-   * 创建笔记
+   * 新建笔记
    */
-  static create(data: Record<string, unknown>): Promise<ApiResponse> {
-    return HttpClient.post('/api/note', data)
+  static addNote(data: {
+    title: string
+    content: string
+    coverUrl?: string
+    imageUrls?: string[]
+  }): Promise<ApiResponse<number>> {
+    return HttpClient.post('/api/note/add', data)
   }
 
   /**
