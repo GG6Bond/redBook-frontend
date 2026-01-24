@@ -1,3 +1,51 @@
+<template>
+
+  <div class="home-view">
+    <div v-if="loading" class="notes-loading">加载中...</div>
+    <div v-else-if="errorMsg" class="notes-error">加载失败：{{ errorMsg }}</div>
+    <div v-else class="notes-grid">
+      <div v-for="note in notes" :key="note.id" class="note-card" @click="openDetail(note)">
+        <!-- 图片区域 -->
+        <div class="note-image">
+          <img :src="note.image" :alt="note.title" />
+        </div>
+
+        <!-- 文字与底部信息 -->
+        <div class="note-content">
+          <h3 class="note-title">{{ note.title }}</h3>
+          <div class="note-footer">
+            <div class="author-info">
+              <img :src="note.avatar" :alt="note.author" class="avatar" />
+              <span class="author-name">{{ note.author }}</span>
+            </div>
+
+            <!-- 操作区：点赞 / 评论 / 分享 -->
+            <div class="actions">
+              <div class="action-item">
+                <el-icon><Star /></el-icon>
+                <span>{{ formatNumber(note.likes) }}</span>
+              </div>
+              <div class="action-item">
+                <el-icon><ChatDotRound /></el-icon>
+                <span>{{ note.comments }}</span>
+              </div>
+              <div class="action-item">
+                <el-icon><Share /></el-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <NoteDetailModal
+        v-model:visible="detailVisible"
+        :note-id="currentNoteId"
+      />
+    </div>
+  </div>
+</template>
+
+
 <script setup lang="ts">
 // Home 视图：展示笔记网格（示例数据）
 // - 使用 Composition API 的 `ref` 持有本地示例数据
@@ -5,6 +53,7 @@
 import { ref, onMounted } from 'vue'
 import { Star, ChatDotRound, Share } from '@element-plus/icons-vue'
 import { NoteAPI } from '../utils/api'
+import NoteDetailModal from '@/components/NoteDetailModal.vue'
 
 interface Note {
   id: string | number
@@ -19,6 +68,17 @@ interface Note {
 
 // `notes` 将通过接口分页获取：/api/note/list/page
 const notes = ref<Note[]>([])
+
+// 控制弹窗状态
+const detailVisible = ref(false)
+// 记录当前点击的 ID
+const currentNoteId = ref('')
+
+const openDetail = (note: any) => {
+  currentNoteId.value = note.id
+  detailVisible.value = true
+}
+
 
 // 分页控制（可用于上拉/下拉或分页组件）
 const current = ref(1)
@@ -72,6 +132,15 @@ const fetchNotes = async (page = 1, size = 12) => {
   }
 }
 
+const handleClick = (id: string | number) => {
+  console.log('点击了笔记')
+  const detail = NoteAPI.getDetail(id)
+  if (detail) {
+    console.log('笔记详情：', detail)
+  }
+}
+
+
 // 初次加载
 onMounted(() => {
   fetchNotes(current.value, pageSize.value)
@@ -87,51 +156,6 @@ const formatNumber = (num: number): string => {
   return String(num)
 }
 </script>
-
-<template>
-  <!--
-    笔记网格：使用 CSS Grid 自动填充列
-    - `minmax(280px, 1fr)` 确保每个卡片最小宽度 280px，窗口变宽后自动增加列数
-  -->
-  <div class="home-view">
-    <div v-if="loading" class="notes-loading">加载中...</div>
-    <div v-else-if="errorMsg" class="notes-error">加载失败：{{ errorMsg }}</div>
-    <div v-else class="notes-grid">
-      <div v-for="note in notes" :key="note.id" class="note-card">
-        <!-- 图片区域 -->
-        <div class="note-image">
-          <img :src="note.image" :alt="note.title" />
-        </div>
-
-        <!-- 文字与底部信息 -->
-        <div class="note-content">
-          <h3 class="note-title">{{ note.title }}</h3>
-          <div class="note-footer">
-            <div class="author-info">
-              <img :src="note.avatar" :alt="note.author" class="avatar" />
-              <span class="author-name">{{ note.author }}</span>
-            </div>
-
-            <!-- 操作区：点赞 / 评论 / 分享 -->
-            <div class="actions">
-              <div class="action-item">
-                <el-icon><Star /></el-icon>
-                <span>{{ formatNumber(note.likes) }}</span>
-              </div>
-              <div class="action-item">
-                <el-icon><ChatDotRound /></el-icon>
-                <span>{{ note.comments }}</span>
-              </div>
-              <div class="action-item">
-                <el-icon><Share /></el-icon>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .home-view {

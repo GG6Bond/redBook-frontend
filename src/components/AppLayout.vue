@@ -96,6 +96,7 @@ import NotePublishModal from './NotePublishModal.vue'
 defineOptions({ name: 'AppLayout' })
 
 import { ref, onMounted } from 'vue'
+import { NoteAPI } from '@/utils/api.ts'
 const router = useRouter()
 const searchQuery = ref('')
 const activeNav = ref('discover')
@@ -129,9 +130,11 @@ const handleNavClick = (nav: string) => {
     showPublishModal.value = true
   }
 }
-function handlePublishSuccess() {
-  // 可选：刷新列表或提示
+const handlePublishSuccess = async () => {
+  // showPublishModal.value = false
+  // await NoteAPI.getList(1, 10)
 }
+
 const handleSearch = () => {
   console.log('search:', searchQuery.value)
 }

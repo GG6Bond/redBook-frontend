@@ -7,6 +7,24 @@ interface ApiResponse<T extends Record<string, unknown> = Record<string, unknown
   data?: T
 }
 
+// cos 相关接口
+export class CosAPI {
+  /**
+   * 获取临时密钥
+   */
+  static getStsCredential(): Promise<ApiResponse<{
+    credentials: {
+      tmpSecretId: string
+      tmpSecretKey: string
+      sessionToken: string
+    }
+    region: string
+    bucket: string
+  }>> {
+    return HttpClient.post('/api/cos/credential', {})
+  }
+}
+
 // 用户相关接口
 export class UserAPI {
   /**
