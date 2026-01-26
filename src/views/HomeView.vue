@@ -228,8 +228,9 @@ const formatNumber = (num: number): string => {
 .note-footer {
   margin-top: auto;
   display: flex;
-  flex-direction: column;
   gap: 8px;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .author-info {
@@ -268,7 +269,7 @@ const formatNumber = (num: number): string => {
 }
 
 .action-item:hover {
-  color: #ff3c5a;
+  color: #3caaff;
 }
 
 .action-item :deep(.el-icon) {

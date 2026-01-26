@@ -33,7 +33,7 @@
         <div
           class="nav-item"
           :class="{ active: activeNav === 'mine' }"
-          @click="handleNavClick('mine')"
+          @click="handleMineClick"
         >
           <el-icon><User /></el-icon>
           <div>我的</div>
@@ -83,6 +83,7 @@
 
       <section class="content-area scrollable-content"><slot /></section>
       <NotePublishModal v-model:visible="showPublishModal" @success="handlePublishSuccess" />
+      <UserCenter v-model:visible="showUserCenter" />
     </main>
   </div>
 </template>
@@ -96,7 +97,6 @@ import NotePublishModal from './NotePublishModal.vue'
 defineOptions({ name: 'AppLayout' })
 
 import { ref, onMounted } from 'vue'
-import { NoteAPI } from '@/utils/api.ts'
 const router = useRouter()
 const searchQuery = ref('')
 const activeNav = ref('discover')
@@ -119,6 +119,15 @@ const categories = [
   '健身',
 ]
 
+import UserCenter from './UserCenterModal.vue' // 引入刚才写的文件
+
+const showUserCenter = ref(false) // 控制弹窗显示
+
+// 点击“我的”按钮时触发
+const handleMineClick = () => {
+  showUserCenter.value = true
+}
+
 // 初始化时检查是否有token
 onMounted(() => {
   hasToken.value = !!localStorage.getItem('token')
@@ -135,9 +144,17 @@ const handlePublishSuccess = async () => {
   // await NoteAPI.getList(1, 10)
 }
 
+
 const handleSearch = () => {
-  console.log('search:', searchQuery.value)
+  if (!searchQuery.value.trim()) return
+
+  // 跳转到搜索结果页，并带上参数 q
+  router.push({
+    path: '/searchResult',
+    query: { q: searchQuery.value }
+  })
 }
+
 
 const handleLogin = () => {
   router.push('/login')

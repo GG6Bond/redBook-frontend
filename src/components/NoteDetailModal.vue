@@ -34,13 +34,22 @@
       </div>
 
       <div class="info-container">
-
         <div class="author-header">
           <div class="author-left">
             <el-avatar :size="40" :src="noteData.userVO?.avatar || defaultAvatar" />
             <span class="nickname">{{ noteData.userVO?.nickname || '未知用户' }}</span>
           </div>
-          <el-button type="danger" round size="small" plain>关注</el-button>
+
+          <el-button
+            :type="isFollowed ? 'info' : 'danger'"
+            :plain="isFollowed"
+            :loading="followLoading"
+            round
+            size="small"
+            @click="handleFollowToggle"
+          >
+            {{ isFollowed ? '已关注' : '关注' }}
+          </el-button>
         </div>
 
         <div class="scroll-content">
@@ -49,7 +58,9 @@
 
           <div class="date-location">
             <span>{{ formatDate(noteData.createTime) }}</span>
-            <span v-if="noteData.userVO?.region" class="location">{{ noteData.userVO.region }}</span>
+            <span v-if="noteData.userVO?.region" class="location">{{
+              noteData.userVO.region
+            }}</span>
           </div>
 
           <el-divider />
@@ -90,11 +101,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, watchEffect } from 'vue'
 import { Picture, Star, CollectionTag, Share } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
-import { NoteAPI } from '@/utils/api.ts' // 建议安装 dayjs 格式化时间
+import { NoteAPI, UserAPI } from '@/utils/api.ts' // 建议安装 dayjs 格式化时间
 
 const props = defineProps<{
   visible: boolean
@@ -116,16 +127,19 @@ const noteData = ref<any>({
   content: '',
   likes: 0,
   favs: 0,
-  comments: 0
+  comments: 0,
 })
 
 // 监听 props 变化
-watch(() => props.visible, (val) => {
-  visible.value = val
-  if (val && props.noteId) {
-    fetchNoteDetail(props.noteId)
-  }
-})
+watch(
+  () => props.visible,
+  (val) => {
+    visible.value = val
+    if (val && props.noteId) {
+      fetchNoteDetail(props.noteId)
+    }
+  },
+)
 
 watch(visible, (val) => {
   emit('update:visible', val)
@@ -135,7 +149,46 @@ const handleClose = () => {
   visible.value = false
 }
 
+// 定义一个响应式的关注状态
+const isFollowed = ref(false)
+const followLoading = ref(false)
 
+// 初始状态同步：当 noteData 加载完成后，根据后端返回的关注状态初始化
+// 假设后端在 UserVO 中返回了是否关注的字段，例如 noteData.userVO.followed
+watchEffect(() => {
+  if (noteData.value?.userVO) {
+    // 这里根据你后端返回的实际字段名修改，如果没有该字段，默认为 false
+    isFollowed.value = noteData.value.userVO.followed || false
+  }
+})
+
+/**
+ * 处理关注/取关点击事件
+ */
+const handleFollowToggle = async () => {
+  const userId = noteData.value?.userVO?.id
+  if (!userId) {
+    ElMessage.warning('用户信息不存在')
+    return
+  }
+
+  followLoading.value = true
+  try {
+    const res = await UserAPI.follow(userId)
+    if (res.code === 0) {
+      // 接口返回 data: { followed: boolean, mutual: boolean }
+      // 直接根据后端返回的最新状态更新前端 UI
+      isFollowed.value = res.data.followed
+
+      ElMessage.success(isFollowed.value ? '关注成功' : '已取消关注')
+    }
+  } catch (error) {
+    console.error('操作失败:', error)
+    ElMessage.error('操作失败，请重试')
+  } finally {
+    followLoading.value = false
+  }
+}
 
 // 模拟获取详情接口
 const fetchNoteDetail = async (id: string) => {
@@ -150,11 +203,11 @@ const fetchNoteDetail = async (id: string) => {
       // 注意：后端接口目前缺 likes, favs, comments 字段，这里手动补 0 防止页面显示异常
       noteData.value = {
         ...res.data,
-        likes: (res.data as any).likes || 0,       // 后端未返回，暂定为 0
-        favs: (res.data as any).favs || 0,         // 后端未返回，暂定为 0
+        likes: (res.data as any).likes || 0, // 后端未返回，暂定为 0
+        favs: (res.data as any).favs || 0, // 后端未返回，暂定为 0
         comments: (res.data as any).comments || 0, // 后端未返回，暂定为 0
         // 确保 userVO 存在，防止报错
-        userVO: res.data.userVO || {}
+        userVO: res.data.userVO || {},
       }
     } else {
       ElMessage.error(res.message || '获取笔记详情失败')
@@ -174,7 +227,7 @@ const formatDate = (time: string) => {
 }
 
 const sendComment = () => {
-  if(!commentText.value) return
+  if (!commentText.value) return
   console.log('发送评论:', commentText.value)
   commentText.value = ''
 }
@@ -211,7 +264,7 @@ const sendComment = () => {
   display: flex;
   flex-direction: column;
   position: relative;
-  border-left: 1px solid #f0f0f0;
+  //border-left: 1px solid #f0f0f0;
 }
 
 /* 1. 作者头部 */
@@ -291,7 +344,7 @@ const sendComment = () => {
 }
 
 .icon-item:hover {
-  color: #ff2442; /* 小红书红 */
+  color: #3caaff; /* 小红书红 */
 }
 
 .count {
@@ -390,7 +443,7 @@ const sendComment = () => {
   width: 100%;
   height: 100%;
   display: flex;
-  align-items: center;    /* 垂直居中 */
+  align-items: center; /* 垂直居中 */
   justify-content: center; /* 水平居中 */
 }
 
@@ -401,4 +454,12 @@ const sendComment = () => {
   display: block;
 }
 
+:deep(.note-detail-modal.el-dialog) {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+:deep(.note-detail-modal.el-dialog .el-dialog__body) {
+  padding: 0;
+}
 </style>
