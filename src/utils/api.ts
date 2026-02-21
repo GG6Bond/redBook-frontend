@@ -28,13 +28,6 @@ export interface PageRequest {
   sortOrder?: string;
 }
 
-/**
- * 关注状态返回
- */
-export interface FollowStatus {
-  followed: boolean; // 是否已关注
-  mutual: boolean;   // 是否互相关注
-}
 
 // cos 相关接口
 export class CosAPI {
@@ -118,20 +111,6 @@ export class UserAPI {
   static updateUserInfo(data: UserUpdateRequest): Promise<ApiResponse<boolean>> {
     return HttpClient.post('/api/user/update', data)
   }
-
-
-
-  /**
-   * 关注/取关用户
-   * 接口地址: /api/follow/{userId}
-   * 请求方式: POST
-   * @param userId 用户ID (路径参数)
-   */
-  static follow(userId: string | number): Promise<ApiResponse<FollowStatus>> {
-    // 注意：这里 userId 是拼接到 URL 路径中的
-    return HttpClient.post(`/api/follow/${userId}`)
-  }
-
 
 }
 
@@ -261,5 +240,26 @@ export class NoteAPI {
 }
 
 
+/**
+ * 关注状态返回
+ */
+export interface FollowStatus {
+  followed: boolean; // 是否已关注
+  mutual: boolean;   // 是否互相关注
+}
+
+export class FollowAPI {
+
+  /**
+   * 关注/取关用户
+   * 接口地址: /api/follow/{userId}
+   * 请求方式: POST
+   * @param userId 用户ID (路径参数)
+   */
+  static follow(userId: string | number): Promise<ApiResponse<FollowStatus>> {
+    // 注意：这里 userId 是拼接到 URL 路径中的
+    return HttpClient.post(`/api/follow/${userId}`)
+  }
 
 
+}
