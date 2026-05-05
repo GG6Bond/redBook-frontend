@@ -41,11 +41,11 @@
 
           <div class="profile-stats">
             <div class="stat-box">
-              <span class="num">{{ userInfo.following || 0 }}</span>
+              <span class="num">{{ following || 0 }}</span>
               <span class="label">关注</span>
             </div>
             <div class="stat-box">
-              <span class="num">{{ userInfo.followers || 0 }}</span>
+              <span class="num">{{ followers || 0 }}</span>
               <span class="label">粉丝</span>
             </div>
             <div class="stat-box">
@@ -185,7 +185,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { Star, Male, Female, User, Calendar, Location, Iphone, Plus } from '@element-plus/icons-vue'
-import { NoteAPI, type PageRequest, UserAPI } from '../utils/api'
+import { FollowAPI, NoteAPI, type PageRequest, UserAPI } from '../utils/api'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
 // 假设你之前有一个 COS 上传工具，如果没有，需要按你的项目实际情况替换
@@ -205,6 +205,11 @@ const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726
 
 const userInfo = ref<any>({})
 const notes = ref<any[]>([])
+
+const following = ref(0)
+const followers = ref(0)
+
+
 
 // 编辑弹窗相关状态
 const editVisible = ref(false)
@@ -243,6 +248,8 @@ const fetchUserData = async () => {
   loading.value = true
   try {
     const userRes = await UserAPI.getCurrentUser()
+    const followRes = await FollowAPI.getFollowingList()
+    following.value = followRes.data.total
     if (userRes.code === 0 && userRes.data) {
       userInfo.value = userRes.data
       if (!userInfo.value.avatar) userInfo.value.avatar = defaultAvatar
@@ -329,8 +336,6 @@ const handleSaveEdit = async () => {
     saveLoading.value = false
   }
 }
-
-
 
 // --- 核心逻辑：获取数据 ---
 const loadData = async () => {

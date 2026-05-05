@@ -261,5 +261,46 @@ export class FollowAPI {
     return HttpClient.post(`/api/follow/${userId}`)
   }
 
+  /**
+   * 获取用户关注状态
+   * 接口地址: /api/follow/status
+   * 请求方式: POST
+   * 参数类型: Query
+   */
+  static getFollowStatus(targetUserId: string | number): Promise<ApiResponse<FollowStatus>> {
+    return HttpClient.post(`/api/follow/status?targetUserId=${targetUserId}`)
+  }
+
+  /**
+   * 获取用户关注列表
+   * 接口地址: /api/follow/followingList
+   * 请求方式: POST
+   */
+  static getFollowingList(data: PageRequest): Promise<ApiResponse<PageResult<any>>> {
+    const payload = {
+      current: 1,
+      pageSize: 10,
+      ...data
+    }
+    return HttpClient.post('/api/follow/followingList', payload)
+  }
+
+  /**
+   * 获取用户粉丝列表
+   * 接口地址: /api/follow/fansList
+   * 请求方式: POST
+   */
+  static getFansList(data: PageRequest): Promise<ApiResponse<PageResult<any>>> {
+    const payload = {
+      current: 1,
+      pageSize: 10,
+      ...data
+    }
+    return HttpClient.post('/api/follow/fansList', payload)
+  }
+
+
+
+
 
 }

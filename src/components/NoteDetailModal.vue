@@ -105,7 +105,7 @@ import { ref, watch, watchEffect } from 'vue'
 import { Picture, Star, CollectionTag, Share } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
-import { NoteAPI, UserAPI } from '@/utils/api.ts' // 建议安装 dayjs 格式化时间
+import { FollowAPI, NoteAPI, UserAPI } from '@/utils/api.ts' // 建议安装 dayjs 格式化时间
 
 const props = defineProps<{
   visible: boolean
@@ -174,7 +174,7 @@ const handleFollowToggle = async () => {
 
   followLoading.value = true
   try {
-    const res = await UserAPI.follow(userId)
+    const res = await FollowAPI.follow(userId)
     if (res.code === 0) {
       // 接口返回 data: { followed: boolean, mutual: boolean }
       // 直接根据后端返回的最新状态更新前端 UI
