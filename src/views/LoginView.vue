@@ -23,9 +23,13 @@ const submit = async () => {
     const res = await UserAPI.login(account.value, password.value)
     // 假设后端在 res.data.token 返回 token
     const token = res?.data?.token
+    const userId = res?.data?.id
     if (!token) throw new Error('登录失败：未返回 token')
-    // 保存 token 到 localStorage，后续请求可从中读取
+    // 保存 token 和 userId 到 localStorage，后续请求可从中读取
     localStorage.setItem('token', token)
+    if (userId) {
+      localStorage.setItem('userId', String(userId))
+    }
     // 导航到首页
     router.push('/')
   } catch (e) {

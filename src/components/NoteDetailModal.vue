@@ -41,12 +41,13 @@
           </div>
 
           <el-button
+            v-if="showFollowButton"
             :type="isFollowed ? 'info' : 'danger'"
             :plain="isFollowed"
             :loading="followLoading"
             round
             size="small"
-            @click="handleFollowToggle"
+            @click.stop="handleFollowToggle"
           >
             {{ isFollowed ? '已关注' : '关注' }}
           </el-button>
@@ -101,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, watchEffect } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { Picture, Star, CollectionTag, Share } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
@@ -133,10 +134,12 @@ const noteData = ref<any>({
 // 监听 props 变化
 watch(
   () => props.visible,
-  (val) => {
+  async (val) => {
     visible.value = val
     if (val && props.noteId) {
-      fetchNoteDetail(props.noteId)
+      // 先获取当前用户ID，再获取笔记详情
+      await fetchCurrentUserId()
+      await fetchNoteDetail(props.noteId)
     }
   },
 )
@@ -153,14 +156,38 @@ const handleClose = () => {
 const isFollowed = ref(false)
 const followLoading = ref(false)
 
-// 初始状态同步：当 noteData 加载完成后，根据后端返回的关注状态初始化
-// 假设后端在 UserVO 中返回了是否关注的字段，例如 noteData.userVO.followed
-watchEffect(() => {
-  if (noteData.value?.userVO) {
-    // 这里根据你后端返回的实际字段名修改，如果没有该字段，默认为 false
-    isFollowed.value = noteData.value.userVO.followed || false
+// 当前登录用户ID
+const currentUserId = ref('')
+
+// 获取当前登录用户ID（总是从API获取最新值，避免精度丢失）
+const fetchCurrentUserId = async () => {
+  try {
+    const res = await UserAPI.getCurrentUser()
+    if (res.code === 0 && res.data?.id) {
+      currentUserId.value = String(res.data.id)
+      // 缓存到 localStorage
+      localStorage.setItem('userId', String(res.data.id))
+    }
+  } catch (error) {
+    console.error('获取当前用户信息失败:', error)
+    // 失败时回退到 localStorage
+    const storedUserId = localStorage.getItem('userId')
+    if (storedUserId) {
+      currentUserId.value = storedUserId
+    }
   }
+}
+
+// 判断是否显示关注按钮（不是自己的笔记才显示）
+const showFollowButton = computed(() => {
+  const authorId = noteData.value?.userVO?.id
+  const currentId = currentUserId.value
+  console.log('调试 - 作者ID:', authorId, '当前用户ID:', currentId)
+  console.log('调试 - 比较结果:', String(authorId) !== String(currentId))
+  return authorId && String(authorId) !== String(currentId)
 })
+
+
 
 /**
  * 处理关注/取关点击事件
@@ -209,6 +236,9 @@ const fetchNoteDetail = async (id: string) => {
         // 确保 userVO 存在，防止报错
         userVO: res.data.userVO || {},
       }
+
+      // 设置关注状态
+      isFollowed.value = res.data.userVO?.followed || false
     } else {
       ElMessage.error(res.message || '获取笔记详情失败')
     }

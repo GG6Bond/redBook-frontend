@@ -30,6 +30,7 @@ instance.interceptors.response.use(
     // 处理401未授权
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
+      localStorage.removeItem('userId')
       // 如果需要跳转登录页，可以在这里调用router
       window.location.hash = '#/login'
     }

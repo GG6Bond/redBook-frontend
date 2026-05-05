@@ -40,11 +40,11 @@
           </div>
 
           <div class="profile-stats">
-            <div class="stat-box">
+            <div class="stat-box" @click="openFollowList">
               <span class="num">{{ following || 0 }}</span>
               <span class="label">关注</span>
             </div>
-            <div class="stat-box">
+            <div class="stat-box" @click="openFanList">
               <span class="num">{{ followers || 0 }}</span>
               <span class="label">粉丝</span>
             </div>
@@ -180,6 +180,12 @@
       </div>
     </template>
   </el-dialog>
+
+  <!-- 关注列表弹窗 -->
+  <FollowListModal v-model:visible="showFollowList" :userName="userInfo.nickname" />
+
+  <!-- 粉丝列表弹窗 -->
+  <FanListModal v-model:visible="showFanList" :userName="userInfo.nickname" />
 </template>
 
 <script setup lang="ts">
@@ -190,6 +196,8 @@ import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
 // 假设你之前有一个 COS 上传工具，如果没有，需要按你的项目实际情况替换
 import { uploadToCos } from '@/utils/cosUpload'
+import FollowListModal from './FollowListModal.vue'
+import FanListModal from './FanListModal.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -209,7 +217,11 @@ const notes = ref<any[]>([])
 const following = ref(0)
 const followers = ref(0)
 
+// 关注列表弹窗相关状态
+const showFollowList = ref(false)
 
+// 粉丝列表弹窗相关状态
+const showFanList = ref(false)
 
 // 编辑弹窗相关状态
 const editVisible = ref(false)
@@ -247,20 +259,25 @@ const handleClose = () => {
 const fetchUserData = async () => {
   loading.value = true
   try {
+    // 获取用户信息
     const userRes = await UserAPI.getCurrentUser()
-    const followRes = await FollowAPI.getFollowingList()
-    following.value = followRes.data.total
     if (userRes.code === 0 && userRes.data) {
       userInfo.value = userRes.data
       if (!userInfo.value.avatar) userInfo.value.avatar = defaultAvatar
     }
 
+    // 获取关注数量和粉丝数量
+    const [followRes, fanRes] = await Promise.all([
+      FollowAPI.getFollowingList(),
+      FollowAPI.getFansList()
+    ])
+    following.value = followRes.data?.total || 0
+    followers.value = fanRes.data?.total || 0
+
     const noteRes = await NoteAPI.getMyNotes()
     if (noteRes.code === 0 && noteRes.data) {
       notes.value = noteRes.data.records
     }
-    // console.log('笔记数据', notes.value)
-    // console.log(notes.value.records.length)
   } catch (e) {
     console.error(e)
     ElMessage.error('加载失败')
@@ -284,6 +301,18 @@ const formatDate = (dateStr: string) => {
 const maskPhone = (phone: string) => {
   if (!phone) return ''
   return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
+}
+
+// ---------- 关注/粉丝列表弹窗逻辑 ----------
+
+// 打开关注列表弹窗
+const openFollowList = () => {
+  showFollowList.value = true
+}
+
+// 打开粉丝列表弹窗
+const openFanList = () => {
+  showFanList.value = true
 }
 
 // ---------- 编辑资料逻辑 ----------

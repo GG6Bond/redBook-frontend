@@ -162,6 +162,7 @@ const handleLogin = () => {
 
 const handleLogout = () => {
   localStorage.removeItem('token')
+  localStorage.removeItem('userId')
   hasToken.value = false
   ElMessage.success('已登出')
   router.push('/login')

@@ -26,6 +26,7 @@ export interface PageRequest {
   pageSize?: number;
   sortField?: string;
   sortOrder?: string;
+  userId?: string | number; // 用户ID，用于查询指定用户的关注/粉丝列表等
 }
 
 
@@ -82,7 +83,7 @@ export class UserAPI {
   /**
    * 登录接口
    */
-  static login(account: string, password: string): Promise<ApiResponse<{ token: string }>> {
+  static login(account: string, password: string): Promise<ApiResponse<{ token: string; id: string }>> {
     return HttpClient.post('/api/user/login', {
       account,
       password,
@@ -275,8 +276,9 @@ export class FollowAPI {
    * 获取用户关注列表
    * 接口地址: /api/follow/followingList
    * 请求方式: POST
+   * @param data 分页参数，可传入userId查询指定用户，不传则查当前登录用户
    */
-  static getFollowingList(data: PageRequest): Promise<ApiResponse<PageResult<any>>> {
+  static getFollowingList(data: PageRequest = {}): Promise<ApiResponse<PageResult<any>>> {
     const payload = {
       current: 1,
       pageSize: 10,
@@ -289,8 +291,9 @@ export class FollowAPI {
    * 获取用户粉丝列表
    * 接口地址: /api/follow/fansList
    * 请求方式: POST
+   * @param data 分页参数，可传入userId查询指定用户，不传则查当前登录用户
    */
-  static getFansList(data: PageRequest): Promise<ApiResponse<PageResult<any>>> {
+  static getFansList(data: PageRequest = {}): Promise<ApiResponse<PageResult<any>>> {
     const payload = {
       current: 1,
       pageSize: 10,
