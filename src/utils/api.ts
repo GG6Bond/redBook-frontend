@@ -301,9 +301,68 @@ export class FollowAPI {
     }
     return HttpClient.post('/api/follow/fansList', payload)
   }
+}
 
 
+/**
+ * 点赞相关接口
+ */
+export class LikeAPI {
+  /**
+   * 点赞笔记
+   */
+  static like(noteId: string | number): Promise<ApiResponse> {
+    return HttpClient.post(`/api/like/${noteId}`)
+  }
+
+  /**
+   * 取消点赞
+   */
+  static unlike(noteId: string | number): Promise<ApiResponse> {
+    return HttpClient.post(`/api/like/unlike/${noteId}`)
+  }
+
+  /**
+   * 获取点赞列表
+   */
+  static getLikeList(data: PageRequest = {}): Promise<ApiResponse<PageResult<any>>> {
+    const payload = {
+      current: 1,
+      pageSize: 10,
+      ...data
+    }
+    return HttpClient.post('/api/like/likeList', payload)
+  }
+}
 
 
+/**
+ * 收藏相关接口
+ */
+export class FavoriteAPI {
+  /**
+   * 收藏笔记
+   */
+  static favorite(noteId: string | number): Promise<ApiResponse> {
+    return HttpClient.post(`/api/favorite/${noteId}`)
+  }
 
+  /**
+   * 取消收藏
+   */
+  static unfavorite(noteId: string | number): Promise<ApiResponse> {
+    return HttpClient.post(`/api/favorite/unfavorite/${noteId}`)
+  }
+
+  /**
+   * 获取收藏列表
+   */
+  static getFavoriteList(data: PageRequest = {}): Promise<ApiResponse<PageResult<any>>> {
+    const payload = {
+      current: 1,
+      pageSize: 10,
+      ...data
+    }
+    return HttpClient.post('/api/favorite/favoriteList', payload)
+  }
 }

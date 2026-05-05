@@ -1,100 +1,168 @@
 <template>
-
   <div class="home-view">
-    <div v-if="loading" class="notes-loading">加载中...</div>
-    <div v-else-if="errorMsg" class="notes-error">加载失败：{{ errorMsg }}</div>
-    <div v-else class="notes-grid">
-      <div v-for="note in notes" :key="note.id" class="note-card" @click="openDetail(note)">
-        <!-- 图片区域 -->
-        <div class="note-image">
-          <img :src="note.image" :alt="note.title" />
-        </div>
-
-        <!-- 文字与底部信息 -->
-        <div class="note-content">
-          <h3 class="note-title">{{ note.title }}</h3>
-          <div class="note-footer">
-            <div class="author-info">
-              <img :src="note.avatar" :alt="note.author" class="avatar" />
-              <span class="author-name">{{ note.author }}</span>
-            </div>
-
-            <!-- 操作区：点赞 / 评论 / 分享 -->
-            <div class="actions">
-              <div class="action-item">
-                <el-icon><Star /></el-icon>
-                <span>{{ formatNumber(note.likes) }}</span>
-              </div>
-              <div class="action-item">
-                <el-icon><ChatDotRound /></el-icon>
-                <span>{{ note.comments }}</span>
-              </div>
-              <div class="action-item">
-                <el-icon><Share /></el-icon>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <NoteDetailModal
-        v-model:visible="detailVisible"
-        :note-id="currentNoteId"
-      />
+    <!-- 加载中状态 -->
+    <div v-if="loading && notes.length === 0" class="initial-loading">
+      <el-skeleton :rows="10" animated />
     </div>
+
+    <!-- 错误提示 -->
+    <div v-else-if="errorMsg" class="error-state">
+      <el-empty description="加载失败" :image-size="120">
+        <template #description>
+          <p>{{ errorMsg }}</p>
+        </template>
+        <el-button type="primary" @click="refresh">重新加载</el-button>
+      </el-empty>
+    </div>
+
+    <!-- 空状态 -->
+    <div v-else-if="notes.length === 0" class="empty-state">
+      <el-empty description="暂无笔记" :image-size="120" />
+    </div>
+
+    <!-- 瀑布流内容 -->
+    <template v-else>
+      <WaterfallContainer
+        :items="notesWithHeight"
+        :loading="loading"
+        :no-more="noMore"
+        :gap="16"
+        :min-column-width="220"
+        @load-more="loadMore"
+      >
+        <template #default="{ item }">
+          <WaterfallCard
+            :id="item.id"
+            :title="item.title"
+            :image-url="item.image"
+            :image-width="item.imageWidth"
+            :image-height="item.imageHeight"
+            :avatar="item.avatar"
+            :author="item.author"
+            :likes="item.likes"
+            :author-id="item.userId"
+            @click="openDetail"
+            @like="handleLike"
+            @collect="handleCollect"
+            @author-click="goToUserProfile"
+          />
+        </template>
+      </WaterfallContainer>
+    </template>
+
+    <!-- 笔记详情弹窗 -->
+    <NoteDetailModal
+      v-model:visible="detailVisible"
+      :note-id="currentNoteId"
+    />
   </div>
 </template>
 
-
 <script setup lang="ts">
-// Home 视图：展示笔记网格（示例数据）
-// - 使用 Composition API 的 `ref` 持有本地示例数据
-// - 图标来自 Element Plus 的图标库
-import { ref, onMounted } from 'vue'
-import { Star, ChatDotRound, Share } from '@element-plus/icons-vue'
-import { NoteAPI } from '../utils/api'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { NoteAPI, LikeAPI, FavoriteAPI } from '../utils/api'
+import WaterfallContainer from '@/components/WaterfallContainer.vue'
+import WaterfallCard from '@/components/WaterfallCard.vue'
 import NoteDetailModal from '@/components/NoteDetailModal.vue'
 
+const router = useRouter()
+
+// 笔记数据类型
 interface Note {
   id: string | number
+  userId: string | number
   title: string
   image: string
+  imageWidth: number
+  imageHeight: number
   avatar: string
   author: string
   likes: number
   comments: number
   saves: number
+  estimatedHeight: number
 }
 
-// `notes` 将通过接口分页获取：/api/note/list/page
+// 原始笔记数据
 const notes = ref<Note[]>([])
 
-// 控制弹窗状态
-const detailVisible = ref(false)
-// 记录当前点击的 ID
-const currentNoteId = ref('')
+// 添加预估高度的笔记数据（用于瀑布流计算）
+const notesWithHeight = computed(() => {
+  return notes.value.map(note => ({
+    ...note,
+    estimatedHeight: calculateEstimatedHeight(note)
+  }))
+})
 
-const openDetail = (note: any) => {
-  currentNoteId.value = note.id
-  detailVisible.value = true
+// 计算预估高度（根据图片比例 + 文字区域固定高度）
+const calculateEstimatedHeight = (note: Note): number => {
+  const containerWidth = 240 // 预估列宽
+  const imageRatio = note.imageHeight / note.imageWidth || 0.75
+  const imageHeight = Math.max(180, Math.min(400, containerWidth * imageRatio))
+  const contentHeight = 100 // 标题 + 作者区域大约高度
+  return imageHeight + contentHeight
 }
 
+// 弹窗控制
+const detailVisible = ref(false)
+const currentNoteId = ref<string | number>('')
 
-// 分页控制（可用于上拉/下拉或分页组件）
+// 分页控制
 const current = ref(1)
-const pageSize = ref(12)
+const pageSize = ref(20)
 const total = ref(0)
 const loading = ref(false)
 const errorMsg = ref('')
+const noMore = computed(() => notes.value.length >= total.value && total.value > 0)
 
-// 将后端记录映射为视图所需字段的辅助函数
+// 打开详情
+const openDetail = (id: string | number) => {
+  currentNoteId.value = id
+  detailVisible.value = true
+}
+
+// 跳转到用户主页
+const goToUserProfile = (userId: string | number) => {
+  router.push(`/user/${userId}`)
+}
+
+// 点赞
+const handleLike = async (id: string | number) => {
+  try {
+    await LikeAPI.like(id)
+    // 更新本地点赞数
+    const note = notes.value.find(n => n.id === id)
+    if (note) {
+      note.likes++
+    }
+    ElMessage.success('点赞成功')
+  } catch (error) {
+    ElMessage.error('点赞失败')
+  }
+}
+
+// 收藏
+const handleCollect = async (id: string | number) => {
+  try {
+    await FavoriteAPI.favorite(id)
+    ElMessage.success('收藏成功')
+  } catch (error) {
+    ElMessage.error('收藏失败')
+  }
+}
+
+// 将后端记录映射为视图所需字段
 const mapRecordToNote = (r: Record<string, unknown>): Note => {
   const record = r as Record<string, unknown> & {
     title?: string
     content?: string
     coverUrl?: string
+    coverWidth?: number
+    coverHeight?: number
     imageUrls?: string[]
-    userVO?: { avatar?: string; nickname?: string; account?: string }
+    userVO?: { id?: string | number; avatar?: string; nickname?: string; account?: string }
     likes?: number
     likeCount?: number
     comments?: number
@@ -102,177 +170,111 @@ const mapRecordToNote = (r: Record<string, unknown>): Note => {
     saves?: number
     collectCount?: number
   }
+
+  // 获取封面图URL
+  const coverUrl = record.coverUrl as string
+
+  // 尝试从URL解析图片尺寸（如果没有返回的话）
+  let imageWidth = record.coverWidth || 400
+  let imageHeight = record.coverHeight || 300
+
+  // 如果没有尺寸信息，尝试从unsplash URL解析
+  if (!imageWidth && coverUrl && coverUrl.includes('unsplash.com')) {
+    // Unsplash图片默认比例约为 4:3 或 3:4
+    imageWidth = 400
+    imageHeight = Math.random() > 0.5 ? 300 : 500 // 模拟不同比例
+  }
+
   return {
     id: (record.id as string | number) || '',
-    title: (record.title as string) || (record.content as string) || '',
-    // 优先使用 coverUrl，其次使用第一张 imageUrls
-    image: record.coverUrl as string,
+    userId: (record.userVO?.id as string | number) || '',
+    title: (record.title as string) || (record.content as string)?.slice(0, 50) || '',
+    image: coverUrl,
+    imageWidth,
+    imageHeight,
     avatar: (record.userVO?.avatar as string) || 'https://via.placeholder.com/32',
     author: (record.userVO?.nickname as string) || (record.userVO?.account as string) || '匿名',
     likes: (record.likes ?? record.likeCount ?? 0) as number,
     comments: (record.comments ?? record.commentCount ?? 0) as number,
     saves: (record.saves ?? record.collectCount ?? 0) as number,
+    estimatedHeight: 0 // 会在computed中计算
   }
 }
 
-// 从后端拉取分页数据，使用 API 类
-const fetchNotes = async (page = 1, size = 12) => {
+// 获取笔记列表
+const fetchNotes = async (page = 1, size = 20) => {
   loading.value = true
   errorMsg.value = ''
   try {
     const res = await NoteAPI.getList(page, size)
     const recs = (res?.data?.records as Array<Record<string, unknown>>) || []
     total.value = (res?.data?.total as number) ?? 0
-    notes.value = recs.map(mapRecordToNote)
+
+    const newNotes = recs.map(mapRecordToNote)
+
+    if (page === 1) {
+      notes.value = newNotes
+    } else {
+      notes.value.push(...newNotes)
+    }
   } catch (e) {
     errorMsg.value = e instanceof Error ? e.message : '请求失败'
-    notes.value = []
+    if (page === 1) {
+      notes.value = []
+    }
   } finally {
     loading.value = false
   }
 }
 
-const handleClick = (id: string | number) => {
-  console.log('点击了笔记')
-  const detail = NoteAPI.getDetail(id)
-  if (detail) {
-    console.log('笔记详情：', detail)
-  }
+// 加载更多
+const loadMore = () => {
+  if (loading.value || noMore.value) return
+  current.value++
+  fetchNotes(current.value, pageSize.value)
 }
 
+// 刷新
+const refresh = () => {
+  current.value = 1
+  notes.value = []
+  fetchNotes(1, pageSize.value)
+}
 
 // 初次加载
 onMounted(() => {
-  fetchNotes(current.value, pageSize.value)
+  fetchNotes(1, pageSize.value)
 })
-
-// 格式化数字的简单工具函数：示例将 >=1 的数字显示为一位小数并加上 '万'
-// 说明：这里是示例逻辑，生产环境应根据数据真实含义（是否单位为万）调整
-const formatNumber = (num: number): string => {
-  // 如果是比万更大的数字，转为带一位小数的“万”单位
-  if (num >= 10000) {
-    return (num / 10000).toFixed(1) + '万'
-  }
-  return String(num)
-}
 </script>
 
 <style scoped>
 .home-view {
   width: 100%;
+  min-height: 100vh;
+  padding: 16px 0;
 }
 
-.notes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-  width: 100%;
+/* 初始加载状态 */
+.initial-loading {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
-.note-card {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  cursor: pointer;
+/* 错误状态 */
+.error-state {
   display: flex;
-  flex-direction: column;
-}
-
-.note-card:hover {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
-}
-
-.note-image {
-  width: 100%;
-  height: 360px;
-  overflow: hidden;
-  background: #f0f0f0;
-}
-
-.note-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.note-card:hover .note-image img {
-  transform: scale(1.05);
-}
-
-.note-content {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-.note-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  line-height: 1.4;
-  /* 多行文本截断：限制为两行并溢出隐藏 */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin: 0;
-}
-
-.note-footer {
-  margin-top: auto;
-  display: flex;
-  gap: 8px;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
+  min-height: 60vh;
+  padding: 40px;
 }
 
-.author-info {
+/* 空状态 */
+.empty-state {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
-}
-
-.avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-}
-
-.author-name {
-  font-size: 12px;
-  color: #999;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-
-.actions {
-  display: flex;
-  gap: 12px;
-  font-size: 12px;
-  color: #999;
-}
-
-.action-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: color 0.3s;
-}
-
-.action-item:hover {
-  color: #3caaff;
-}
-
-.action-item :deep(.el-icon) {
-  font-size: 14px;
+  min-height: 60vh;
 }
 </style>
