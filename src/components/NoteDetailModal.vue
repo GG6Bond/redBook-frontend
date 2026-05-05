@@ -83,15 +83,19 @@
             </el-input>
           </div>
           <div class="icons-wrapper">
-            <div class="icon-item">
-              <el-icon :size="24"><Star /></el-icon>
+            <div class="icon-item" :class="{ 'is-active': noteData.isLiked }" @click="handleLike">
+              <svg viewBox="0 0 24 24" width="24" height="24" :fill="noteData.isLiked ? '#ff2442' : 'none'" :stroke="noteData.isLiked ? '#ff2442' : 'currentColor'" stroke-width="2">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
               <span class="count">{{ noteData.likes || 0 }}</span>
             </div>
-            <div class="icon-item">
-              <el-icon :size="24"><CollectionTag /></el-icon>
+            <div class="icon-item" :class="{ 'is-active': noteData.isCollected }" @click="handleCollect">
+              <el-icon :size="24" :color="noteData.isCollected ? '#ffcc00' : ''">
+                <CollectionTag />
+              </el-icon>
               <span class="count">{{ noteData.favs || 0 }}</span>
             </div>
-            <div class="icon-item">
+            <div class="icon-item" @click="handleShare">
               <el-icon :size="24"><Share /></el-icon>
             </div>
           </div>
@@ -106,14 +110,14 @@ import { ref, watch, computed } from 'vue'
 import { Picture, Star, CollectionTag, Share } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
-import { FollowAPI, NoteAPI, UserAPI } from '@/utils/api.ts' // 建议安装 dayjs 格式化时间
+import { FollowAPI, NoteAPI, UserAPI, LikeAPI, FavoriteAPI } from '@/utils/api.ts' // 建议安装 dayjs 格式化时间
 
 const props = defineProps<{
   visible: boolean
   noteId: string // 接收父组件传来的ID
 }>()
 
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible', 'update'])
 
 const visible = ref(false)
 const loading = ref(false)
@@ -129,6 +133,8 @@ const noteData = ref<any>({
   likes: 0,
   favs: 0,
   comments: 0,
+  isLiked: false,    // 是否已点赞
+  isCollected: false, // 是否已收藏
 })
 
 // 监听 props 变化
@@ -149,12 +155,22 @@ watch(visible, (val) => {
 })
 
 const handleClose = () => {
+  // 关闭时通知父组件更新列表中的状态
+  emit('update', {
+    noteId: props.noteId,
+    likes: noteData.value.likes,
+    favs: noteData.value.favs,
+    isLiked: noteData.value.isLiked,
+    isCollected: noteData.value.isCollected
+  })
   visible.value = false
 }
 
 // 定义一个响应式的关注状态
 const isFollowed = ref(false)
 const followLoading = ref(false)
+const likeLoading = ref(false)
+const collectLoading = ref(false)
 
 // 当前登录用户ID
 const currentUserId = ref('')
@@ -217,7 +233,7 @@ const handleFollowToggle = async () => {
   }
 }
 
-// 模拟获取详情接口
+// 获取笔记详情
 const fetchNoteDetail = async (id: string) => {
   loading.value = true
   try {
@@ -227,12 +243,15 @@ const fetchNoteDetail = async (id: string) => {
     // 2. 判断业务状态码 (假设 code === 0 为成功)
     if (res.code === 0 && res.data) {
       // 3. 赋值给响应式数据
-      // 注意：后端接口目前缺 likes, favs, comments 字段，这里手动补 0 防止页面显示异常
+      // 注意：后端接口可能缺 likes, favs, comments 字段，这里手动补 0 防止页面显示异常
       noteData.value = {
         ...res.data,
-        likes: (res.data as any).likes || 0, // 后端未返回，暂定为 0
-        favs: (res.data as any).favs || 0, // 后端未返回，暂定为 0
-        comments: (res.data as any).comments || 0, // 后端未返回，暂定为 0
+        likes: (res.data as any).likes || 0,
+        favs: (res.data as any).favs || 0,
+        comments: (res.data as any).comments || 0,
+        // 从后端获取点赞和收藏状态
+        isLiked: (res.data as any).isLiked || false,
+        isCollected: (res.data as any).isCollected || false,
         // 确保 userVO 存在，防止报错
         userVO: res.data.userVO || {},
       }
@@ -260,6 +279,89 @@ const sendComment = () => {
   if (!commentText.value) return
   console.log('发送评论:', commentText.value)
   commentText.value = ''
+}
+
+/**
+ * 处理点赞/取消点赞
+ */
+const handleLike = async () => {
+  if (likeLoading.value) return
+  if (!props.noteId) {
+    ElMessage.warning('笔记信息不存在')
+    return
+  }
+
+  likeLoading.value = true
+  try {
+    // 后端接口是切换式的：已点赞则取消，未点赞则点赞
+    const res = await LikeAPI.like(props.noteId)
+
+    if (res.code === 0) {
+      // 使用后端返回的最新状态更新前端 UI
+      const newIsLiked = res.data as boolean
+      const oldIsLiked = noteData.value.isLiked
+
+      noteData.value.isLiked = newIsLiked
+      // 根据新状态更新数量
+      noteData.value.likes = newIsLiked
+        ? (noteData.value.likes || 0) + 1
+        : Math.max((noteData.value.likes || 0) - 1, 0)
+
+      ElMessage.success(newIsLiked ? '点赞成功' : '已取消点赞')
+    } else {
+      ElMessage.error(res.message || '操作失败')
+    }
+  } catch (error) {
+    console.error('点赞失败:', error)
+    ElMessage.error('操作失败，请重试')
+  } finally {
+    likeLoading.value = false
+  }
+}
+
+/**
+ * 处理收藏/取消收藏
+ */
+const handleCollect = async () => {
+  if (collectLoading.value) return
+  if (!props.noteId) {
+    ElMessage.warning('笔记信息不存在')
+    return
+  }
+
+  collectLoading.value = true
+  try {
+    // 后端接口是切换式的：已收藏则取消，未收藏则收藏
+    const res = await FavoriteAPI.favorite(props.noteId)
+
+    if (res.code === 0) {
+      // 使用后端返回的最新状态更新前端 UI
+      const newIsCollected = res.data as boolean
+      const oldIsCollected = noteData.value.isCollected
+
+      noteData.value.isCollected = newIsCollected
+      // 根据新状态更新数量
+      noteData.value.favs = newIsCollected
+        ? (noteData.value.favs || 0) + 1
+        : Math.max((noteData.value.favs || 0) - 1, 0)
+
+      ElMessage.success(newIsCollected ? '收藏成功' : '已取消收藏')
+    } else {
+      ElMessage.error(res.message || '操作失败')
+    }
+  } catch (error) {
+    console.error('收藏失败:', error)
+    ElMessage.error('操作失败，请重试')
+  } finally {
+    collectLoading.value = false
+  }
+}
+
+/**
+ * 处理分享
+ */
+const handleShare = () => {
+  ElMessage.info('分享功能暂未开放')
 }
 </script>
 
@@ -374,7 +476,15 @@ const sendComment = () => {
 }
 
 .icon-item:hover {
-  color: #3caaff; /* 小红书红 */
+  color: #3caaff;
+}
+
+.icon-item.is-active {
+  color: #ff2442;
+}
+
+.icon-item.is-active:hover {
+  opacity: 0.8;
 }
 
 .count {

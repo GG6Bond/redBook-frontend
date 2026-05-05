@@ -309,17 +309,13 @@ export class FollowAPI {
  */
 export class LikeAPI {
   /**
-   * 点赞笔记
+   * 点赞/取消点赞笔记（切换式接口）
+   * 如果已点赞则取消点赞，如果未点赞则点赞
+   * @param noteId 笔记 ID
+   * @returns 返回操作后的点赞状态（true=已点赞，false=已取消）
    */
-  static like(noteId: string | number): Promise<ApiResponse> {
+  static like(noteId: string | number): Promise<ApiResponse<boolean>> {
     return HttpClient.post(`/api/like/${noteId}`)
-  }
-
-  /**
-   * 取消点赞
-   */
-  static unlike(noteId: string | number): Promise<ApiResponse> {
-    return HttpClient.post(`/api/like/unlike/${noteId}`)
   }
 
   /**
@@ -341,17 +337,13 @@ export class LikeAPI {
  */
 export class FavoriteAPI {
   /**
-   * 收藏笔记
+   * 收藏/取消收藏笔记（切换式接口）
+   * 如果已收藏则取消收藏，如果未收藏则收藏
+   * @param noteId 笔记 ID
+   * @returns 返回操作后的收藏状态（true=已收藏，false=已取消）
    */
-  static favorite(noteId: string | number): Promise<ApiResponse> {
+  static favorite(noteId: string | number): Promise<ApiResponse<boolean>> {
     return HttpClient.post(`/api/favorite/${noteId}`)
-  }
-
-  /**
-   * 取消收藏
-   */
-  static unfavorite(noteId: string | number): Promise<ApiResponse> {
-    return HttpClient.post(`/api/favorite/unfavorite/${noteId}`)
   }
 
   /**

@@ -54,6 +54,7 @@
     <NoteDetailModal
       v-model:visible="detailVisible"
       :note-id="currentNoteId"
+      @update="handleNoteUpdate"
     />
   </div>
 </template>
@@ -131,25 +132,53 @@ const goToUserProfile = (userId: string | number) => {
 // 点赞
 const handleLike = async (id: string | number) => {
   try {
-    await LikeAPI.like(id)
-    // 更新本地点赞数
+    const res = await LikeAPI.like(id)
+    // 使用后端返回的最新状态更新前端 UI
+    const newIsLiked = res.data as boolean
     const note = notes.value.find(n => n.id === id)
     if (note) {
-      note.likes++
+      // 根据新状态更新数量
+      note.likes = newIsLiked
+        ? (note.likes || 0) + 1
+        : Math.max((note.likes || 0) - 1, 0)
+      ElMessage.success(newIsLiked ? '点赞成功' : '已取消点赞')
     }
-    ElMessage.success('点赞成功')
   } catch (error) {
-    ElMessage.error('点赞失败')
+    ElMessage.error('操作失败，请重试')
   }
 }
 
 // 收藏
 const handleCollect = async (id: string | number) => {
   try {
-    await FavoriteAPI.favorite(id)
-    ElMessage.success('收藏成功')
+    const res = await FavoriteAPI.favorite(id)
+    // 使用后端返回的最新状态更新前端 UI
+    const newIsCollected = res.data as boolean
+    const note = notes.value.find(n => n.id === id)
+    if (note) {
+      // 根据新状态更新数量
+      note.saves = newIsCollected
+        ? (note.saves || 0) + 1
+        : Math.max((note.saves || 0) - 1, 0)
+      ElMessage.success(newIsCollected ? '收藏成功' : '已取消收藏')
+    }
   } catch (error) {
-    ElMessage.error('收藏失败')
+    ElMessage.error('操作失败，请重试')
+  }
+}
+
+// 处理笔记详情弹窗关闭后的状态更新
+const handleNoteUpdate = (data: {
+  noteId: string | number
+  likes: number
+  favs: number
+  isLiked: boolean
+  isCollected: boolean
+}) => {
+  const note = notes.value.find(n => n.id === data.noteId)
+  if (note) {
+    note.likes = data.likes
+    note.saves = data.favs
   }
 }
 
@@ -194,10 +223,10 @@ const mapRecordToNote = (r: Record<string, unknown>): Note => {
     imageHeight,
     avatar: (record.userVO?.avatar as string) || 'https://via.placeholder.com/32',
     author: (record.userVO?.nickname as string) || (record.userVO?.account as string) || '匿名',
-    likes: (record.likes ?? record.likeCount ?? 0) as number,
-    comments: (record.comments ?? record.commentCount ?? 0) as number,
-    saves: (record.saves ?? record.collectCount ?? 0) as number,
-    estimatedHeight: 0 // 会在computed中计算
+    likes: (record.likes as number) || 0,
+    comments: (record.comments as number) || 0,
+    saves: (record.favs as number) || 0,
+    estimatedHeight: 0 // 会在 computed 中计算
   }
 }
 
