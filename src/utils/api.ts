@@ -358,3 +358,95 @@ export class FavoriteAPI {
     return HttpClient.post('/api/favorite/favoriteList', payload)
   }
 }
+
+
+/**
+ * 评论视图对象
+ */
+export interface CommentVO {
+  id: string;
+  noteId: string;
+  userId: string;
+  userNickname: string;
+  userAvatar: string;
+  parentId: string;
+  replyUserId: string;
+  replyUserNickname?: string;
+  content: string;
+  likeCount: number;
+  isLiked: boolean;
+  createTime: string;
+  replies?: CommentVO[];
+  replyCount?: number;
+}
+
+/**
+ * 添加评论请求参数
+ */
+export interface CommentAddRequest {
+  noteId: string;
+  content: string;
+  parentId?: string;
+  replyUserId?: string;
+}
+
+/**
+ * 评论查询请求参数
+ */
+export interface CommentQueryRequest {
+  noteId: string;
+  current?: number;
+  pageSize?: number;
+}
+
+/**
+ * 评论相关接口
+ */
+export class CommentAPI {
+  /**
+   * 添加评论
+   */
+  static addComment(data: CommentAddRequest): Promise<ApiResponse<string>> {
+    return HttpClient.post('/api/comment/add', data)
+  }
+
+  /**
+   * 删除评论
+   */
+  static deleteComment(commentId: string): Promise<ApiResponse<boolean>> {
+    return HttpClient.post(`/api/comment/delete/${commentId}`)
+  }
+
+  /**
+   * 获取评论列表
+   */
+  static getCommentList(data: CommentQueryRequest): Promise<ApiResponse<PageResult<CommentVO>>> {
+    const payload = {
+      current: 1,
+      pageSize: 20,
+      ...data
+    }
+    return HttpClient.post('/api/comment/list', payload)
+  }
+
+  /**
+   * 点赞/取消点赞评论
+   */
+  static toggleLike(commentId: string): Promise<ApiResponse<boolean>> {
+    return HttpClient.post(`/api/comment/like/${commentId}`)
+  }
+
+  /**
+   * 获取评论点赞状态
+   */
+  static getLikeStatus(commentId: string): Promise<ApiResponse<boolean>> {
+    return HttpClient.post(`/api/comment/like/status?commentId=${commentId}`)
+  }
+
+  /**
+   * 获取评论点赞数量
+   */
+  static getLikeCount(commentId: string): Promise<ApiResponse<number>> {
+    return HttpClient.post(`/api/comment/like/count?commentId=${commentId}`)
+  }
+}

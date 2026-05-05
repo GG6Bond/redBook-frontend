@@ -66,19 +66,15 @@
 
           <el-divider />
 
-          <div class="comments-section">
-            <div class="total-comments">共 {{ noteData.comments || 0 }} 条评论</div>
-            <div class="comment-placeholder">
-              <el-empty description="暂无评论，快来抢沙发" :image-size="60" />
-            </div>
-          </div>
+          <!-- 评论区 -->
+          <CommentsSection ref="commentsSectionRef" :noteId="noteId" @comment-change="handleCommentChange" />
         </div>
 
         <div class="interaction-footer">
           <div class="input-wrapper">
             <el-input v-model="commentText" placeholder="说点什么..." class="comment-input">
               <template #suffix>
-                <el-button type="primary" link @click="sendComment">发送</el-button>
+                <el-button type="primary" link @click="handleSendComment">发送</el-button>
               </template>
             </el-input>
           </div>
@@ -110,11 +106,12 @@ import { ref, watch, computed } from 'vue'
 import { Picture, Star, CollectionTag, Share } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
-import { FollowAPI, NoteAPI, UserAPI, LikeAPI, FavoriteAPI } from '@/utils/api.ts' // 建议安装 dayjs 格式化时间
+import { FollowAPI, NoteAPI, UserAPI, LikeAPI, FavoriteAPI } from '@/utils/api.ts'
+import CommentsSection from '@/components/CommentsSection.vue'
 
 const props = defineProps<{
   visible: boolean
-  noteId: string // 接收父组件传来的ID
+  noteId: string
 }>()
 
 const emit = defineEmits(['update:visible', 'update'])
@@ -123,6 +120,9 @@ const visible = ref(false)
 const loading = ref(false)
 const commentText = ref('')
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+
+// 评论组件引用
+const commentsSectionRef = ref<any>(null)
 
 // 定义数据结构
 const noteData = ref<any>({
@@ -271,14 +271,22 @@ const fetchNoteDetail = async (id: string) => {
 
 const formatDate = (time: string) => {
   if (!time) return ''
-  // 简单格式化，如果没装 dayjs 可以用 new Date().toLocaleDateString()
   return dayjs(time).format('MM-DD HH:mm')
 }
 
-const sendComment = () => {
+// 发送评论
+const handleSendComment = () => {
   if (!commentText.value) return
-  console.log('发送评论:', commentText.value)
-  commentText.value = ''
+  if (commentsSectionRef.value) {
+    commentsSectionRef.value.sendComment(commentText.value)
+    commentText.value = ''
+  }
+}
+
+// 处理评论变化（更新评论数等）
+const handleCommentChange = () => {
+  // 可以在这里更新笔记的评论数量
+  console.log('评论发生变化')
 }
 
 /**
