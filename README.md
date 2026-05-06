@@ -1,29 +1,24 @@
-# redBook-frontend
+# 类小红书社区网站（前端）（更新中...）
 
-This template should help get you started developing with Vue 3 in Vite.
+# 技术栈
+前端：VUE3 + Element Plus + 腾讯云COS对象存储
 
-## Recommended IDE Setup
+后端：Springboot + Mybatis + MySQL + Redis + Rabbit MQ + 腾讯云COS对象存储
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+# 前端页面展示（已有功能）
+首页：
+<img width="2550" height="1275" alt="首页" src="https://github.com/user-attachments/assets/c328389c-1b2b-4abb-976f-e5eebe6ddb77" />
+------
+笔记详情：
+<img width="2550" height="1275" alt="笔记详情页" src="https://github.com/user-attachments/assets/c829700d-19a6-458f-bc64-91e868d55d84" />
+------
+我的：
+<img width="2550" height="1275" alt="我的页面" src="https://github.com/user-attachments/assets/eb8cc6be-bc03-4e7e-811e-9086b0518fcf" />
+------
+未完待续...
 
-## Recommended Browser Setup
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## Project Setup，运行命令
 
 ```sh
 npm install
