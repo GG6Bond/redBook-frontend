@@ -23,12 +23,15 @@
           <div>发布</div>
         </div>
         <div
-          class="nav-item"
+          class="nav-item notify-item"
           :class="{ active: activeNav === 'notify' }"
           @click="handleNavClick('notify')"
         >
           <el-icon><Bell /></el-icon>
           <div>通知</div>
+          <span v-if="notificationStore.hasUnread" class="unread-badge">
+            {{ notificationStore.unreadCount > 99 ? '99+' : notificationStore.unreadCount }}
+          </span>
         </div>
         <div
           class="nav-item"
@@ -93,13 +96,28 @@ import { useRouter } from 'vue-router'
 import { Search, Plus, Bell, User, SwitchButton, Close } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import NotePublishModal from './NotePublishModal.vue'
+import { useNotificationStore } from '@/stores/notification'
 
 defineOptions({ name: 'AppLayout' })
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 const router = useRouter()
+const notificationStore = useNotificationStore()
 const searchQuery = ref('')
 const activeNav = ref('discover')
+
+// 监听路由变化，同步 activeNav 状态
+watch(() => router.currentRoute.value.path, (newPath) => {
+  if (newPath === '/notifications') {
+    activeNav.value = 'notify'
+  } else if (newPath === '/login') {
+    activeNav.value = 'discover'
+  } else if (newPath === '/searchResult') {
+    activeNav.value = 'discover'
+  } else {
+    activeNav.value = 'discover'
+  }
+}, { immediate: true })
 
 const activeCategory = ref('推荐')
 const hasToken = ref(false)
@@ -128,15 +146,27 @@ const handleMineClick = () => {
   showUserCenter.value = true
 }
 
-// 初始化时检查是否有token
+// 初始化时检查是否有 token
 onMounted(() => {
   hasToken.value = !!localStorage.getItem('token')
+  // 初始化 WebSocket 和未读计数
+  const token = localStorage.getItem('token')
+  console.log('AppLayout onMounted, token:', token ? '存在' : '不存在')
+  if (token) {
+    console.log('准备初始化 WebSocket')
+    notificationStore.initWebSocket()
+  } else {
+    console.log('没有 token，跳过 WebSocket 初始化')
+  }
 })
 
 const handleNavClick = (nav: string) => {
-  activeNav.value = nav
   if (nav === 'publish') {
     showPublishModal.value = true
+  } else if (nav === 'notify') {
+    router.push('/notifications')
+  } else if (nav === 'discover') {
+    router.push('/')
   }
 }
 const handlePublishSuccess = async () => {
@@ -226,6 +256,35 @@ const handleLogout = () => {
   border-radius: 30;
   cursor: pointer;
   gap: 10px;
+  position: relative;
+}
+
+.nav-item.notify-item {
+  position: relative;
+}
+
+.unread-badge {
+  position: absolute;
+  top: 8px;
+  right: 20px;
+  background: #ff4d4f;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .nav-item > div {

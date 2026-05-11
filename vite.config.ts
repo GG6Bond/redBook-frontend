@@ -14,6 +14,7 @@ export default defineConfig({
         target: 'http://localhost:8765',
         changeOrigin: true,
         secure: false,
+        ws: true, // 启用 WebSocket 代理
         // 保持 /api 前缀传递到后端（后端已配置 context-path: /api）
         rewrite: (path) => path,
       },

@@ -4,17 +4,14 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 
 const router = createRouter({
-  // 使用 HTML5 history 模式
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      // 根路径 -> HomeView
       path: '/',
       name: 'home',
       component: HomeView,
     },
     {
-      // 登录页面
       path: '/login',
       name: 'login',
       component: LoginView,
@@ -22,8 +19,13 @@ const router = createRouter({
     {
       path: '/searchResult',
       name: 'search',
-      component: () => import('@/views/SearchView.vue')
-    }
+      component: () => import('@/views/SearchView.vue'),
+    },
+    {
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('@/views/NotificationView.vue'),
+    },
   ],
 })
 

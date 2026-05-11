@@ -259,11 +259,23 @@ const fetchNoteDetail = async (id: string) => {
       // 设置关注状态
       isFollowed.value = res.data.userVO?.followed || false
     } else {
+      if (res.code === 40100 || res.message?.includes('登录')) {
+        ElMessage.error('请先登录后再查看笔记详情')
+        visible.value = false
+        emit('update:visible', false)
+        return
+      }
       ElMessage.error(res.message || '获取笔记详情失败')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('请求详情出错:', error)
-    ElMessage.error('网络异常，请稍后重试')
+    if (error.response?.status === 401) {
+      ElMessage.error('登录已过期，请重新登录后再查看笔记详情')
+      visible.value = false
+      emit('update:visible', false)
+    } else {
+      ElMessage.error('网络异常，请稍后重试')
+    }
   } finally {
     loading.value = false
   }

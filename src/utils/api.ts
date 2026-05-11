@@ -450,3 +450,76 @@ export class CommentAPI {
     return HttpClient.post(`/api/comment/like/count?commentId=${commentId}`)
   }
 }
+
+/**
+ * 通知视图对象
+ */
+export interface NotificationVO {
+  id: string;
+  type: number;
+  typeName: string;
+  title: string;
+  content: string;
+  relatedType: number | null;
+  relatedId: string | null;
+  noteId: string | null;
+  isRead: number;
+  createTime: string;
+  senderId: string | null;
+  senderNickname: string;
+  senderAvatar: string;
+}
+
+/**
+ * 通知查询请求参数
+ */
+export interface NotificationQueryRequest {
+  userId?: string;
+  current?: number;
+  pageSize?: number;
+}
+
+/**
+ * 通知相关接口
+ */
+export class NotificationAPI {
+  /**
+   * 获取通知列表
+   */
+  static getNotificationList(data: NotificationQueryRequest = {}): Promise<ApiResponse<PageResult<NotificationVO>>> {
+    const payload = {
+      current: 1,
+      pageSize: 10,
+      ...data
+    }
+    return HttpClient.post('/api/notification/list', payload)
+  }
+
+  /**
+   * 标记单个通知已读
+   */
+  static markAsRead(notificationId: string): Promise<ApiResponse<boolean>> {
+    return HttpClient.post(`/api/notification/read/${notificationId}`)
+  }
+
+  /**
+   * 标记全部通知已读
+   */
+  static markAllAsRead(): Promise<ApiResponse<boolean>> {
+    return HttpClient.post('/api/notification/read/all')
+  }
+
+  /**
+   * 获取未读消息数量
+   */
+  static getUnreadCount(): Promise<ApiResponse<number>> {
+    return HttpClient.get('/api/notification/unread/count')
+  }
+
+  /**
+   * 删除通知
+   */
+  static deleteNotification(notificationId: string): Promise<ApiResponse<boolean>> {
+    return HttpClient.delete(`/api/notification/${notificationId}`)
+  }
+}
