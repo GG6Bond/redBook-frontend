@@ -7,9 +7,15 @@
 
 # 前端页面展示（已有功能）
 首页：
-<img width="2550" height="1275" alt="首页" src="https://github.com/user-attachments/assets/c328389c-1b2b-4abb-976f-e5eebe6ddb77" />
+<img width="2560" height="1270" alt="image" src="https://github.com/user-attachments/assets/2f2fb9da-bf25-42be-81c8-de358000d029" />
+
 ------
 笔记详情：
+<img width="2560" height="1270" alt="image" src="https://github.com/user-attachments/assets/608aadc6-575f-4447-9c3e-ea5e30ccb8f2" />
+
+<img width="2560" height="1270" alt="image" src="https://github.com/user-attachments/assets/c6e9fde6-a67b-443b-84e0-e00249dfc856" />
+
+
 <img width="2550" height="1275" alt="笔记详情页" src="https://github.com/user-attachments/assets/c829700d-19a6-458f-bc64-91e868d55d84" />
 ------
 我的：
